@@ -7,19 +7,34 @@ struct Video {
     url: String,
 }
 
-#[get("/api/videos?<q>")]
-fn search_videos(q: &str) -> Json<Vec<Video>> {
-    let results = vec![
-        Video {
-            title: format!("{} 入门教程", q),
-            url: "https://www.bilibili.com/video/abc123".to_string(),
-        },
-        Video {
-            title: format!("{} 实战讲解", q),
-            url: "https://www.bilibili.com/video/xyz456".to_string(),
-        },
-    ];
-    Json(results)
+#[derive(Serialize)]
+struct ApiResponse<T> {
+    code: u8,
+    message: String,
+    data: T,
+}
+
+#[get("/api/videos?<keyword>")]
+fn search_videos(keyword: &str) -> Json<ApiResponse<Vec<Video>>> {
+    // 实际项目中可根据 keyword 查询数据库
+    let results = match keyword {
+        "动态规划" => vec![
+            Video {
+                title: "动态规划".to_string(),
+                url: "https://billbill/dp_learning".to_string(),
+            },
+            Video {
+                title: "递归".to_string(),
+                url: "https://billbill/digui_learning".to_string(),
+            },
+        ],
+        _ => vec![],
+    };
+    Json(ApiResponse {
+        code: 0,
+        message: "操作成功".to_string(),
+        data: results,
+    })
 }
 
 #[launch]
