@@ -15,10 +15,11 @@ struct ApiResponse<T> {
     data: T,
 }
 
+// 视频搜索接口
 #[get("/api/videos?<keyword>")]
-fn search_videos(keyword: &str) -> Json<ApiResponse<Vec<Video>>> {
+fn search_videos(keyword: Option<&str>) -> Json<ApiResponse<Vec<Video>>> {
     let results = match keyword {
-        "动态规划" => vec![
+        Some("动态规划") => vec![
             Video {
                 title: "动态规划".to_string(),
                 url: "https://billbill/dp_learning".to_string(),
@@ -36,7 +37,6 @@ fn search_videos(keyword: &str) -> Json<ApiResponse<Vec<Video>>> {
         data: results,
     })
 }
-
 // 博客相关接口
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
