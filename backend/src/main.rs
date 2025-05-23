@@ -1,6 +1,7 @@
 #[macro_use] extern crate rocket;
-use rocket::serde::{json::Json, Serialize};
+use rocket::serde::{Serialize, Deserialize, json::Json};
 
+// 视频学习接口
 #[derive(Serialize)]
 struct Video {
     title: String,
@@ -16,7 +17,6 @@ struct ApiResponse<T> {
 
 #[get("/api/videos?<keyword>")]
 fn search_videos(keyword: &str) -> Json<ApiResponse<Vec<Video>>> {
-    // 实际项目中可根据 keyword 查询数据库
     let results = match keyword {
         "动态规划" => vec![
             Video {
@@ -37,7 +37,103 @@ fn search_videos(keyword: &str) -> Json<ApiResponse<Vec<Video>>> {
     })
 }
 
+// 博客相关接口
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+struct BlogPost {
+    id: u32,
+    title: String,
+    author: String,
+    content: String,
+    created_at: String,
+    comment_count: u32,
+    related_problem: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+struct BlogListResponse {
+    code: u8,
+    message: Option<String>,
+    posts: Vec<BlogPost>,
+}
+
+#[get("/api/problems/<message>/posts?<page>&<per_page>")]
+fn get_blog_list(message: &str, page: u32, per_page: u32) -> Json<BlogListResponse> {
+    let posts = vec![
+        BlogPost {
+            id: 101,
+            title: "所有权问题详解".to_string(),
+            author: "user123".to_string(),
+            content: "题目的解析是......".to_string(),
+            created_at: "2024-03-20T10:00:00Z".to_string(),
+            comment_count: 5,
+            related_problem: Some(message.to_string()),
+        }
+    ];
+    Json(BlogListResponse {
+        code: 0,
+        message: Some("操作成功".to_string()),
+        posts,
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct NewBlogPost {
+    title: String,
+    content: String,
+    related_problem: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+struct AddBlogResponse {
+    code: u8,
+    message: Option<String>,
+    post_id: u32,
+    created_at: String,
+}
+
+#[post("/api/posts", format = "json", data = "<post>")]
+fn add_blog(post: Json<NewBlogPost>) -> Json<AddBlogResponse> {
+    Json(AddBlogResponse {
+        code: 0,
+        message: Some("操作成功".to_string()),
+        post_id: 101,
+        created_at: "2024-03-20T10:00:00Z".to_string(),
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct NewComment {
+    content: String,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+struct AddCommentResponse {
+    code: u8,
+    message: Option<String>,
+    comment_id: String,
+    created_at: String,
+}
+
+#[post("/api/posts/<id>/comments", format = "json", data = "<comment>")]
+fn add_comment(id: u32, comment: Json<NewComment>) -> Json<AddCommentResponse> {
+    Json(AddCommentResponse {
+        code: 0,
+        message: Some("操作成功".to_string()),
+        comment_id: format!("{}-1", id),
+        created_at: "2024-03-20T10:05:00Z".to_string(),
+    })
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![search_videos])
+    rocket::build().mount(
+        "/",
+        routes![search_videos, get_blog_list, add_blog, add_comment],
+    )
 }
